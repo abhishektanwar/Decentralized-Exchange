@@ -28,7 +28,8 @@ function App({web3, accounts, contracts}) {
 
   const deposit =async (amount) => {
     await contracts[user.selectedToken.ticker].methods
-    .approve(contracts.dex.options.address, amount);
+    .approve(contracts.dex.options.address, amount)
+    .send({from:user.accounts[0]});
     await contracts.dex.methods
     .deposit(
       amount,

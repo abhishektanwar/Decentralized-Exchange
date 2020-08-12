@@ -43,13 +43,13 @@ module.exports =async function (deployer, _network, accounts) {
             amount,
             {from:trader}
         );
-        const ticker = await token.symbol();
+        const ticker = await token.name();
 
         await dex.deposit(
             amount,
             web3.utils.fromAscii(ticker),
             {from:trader}
-        )
+        );
     };
     
     await Promise.all(
@@ -85,7 +85,7 @@ module.exports =async function (deployer, _network, accounts) {
     // create fake orders 
     // createLimitOrder => ticker,amount,price,side
     //createMarketOrder => ticker,amount,side
-    await dex.createLimitOrder(BAT, 1000, 11, SIDE.BUY, {from: trader1});
+    await dex.createLimitOrder(BAT, 1000, 10, SIDE.BUY, {from: trader1});
     await dex.createMarketOrder(BAT, 1000, SIDE.SELL, {from:trader2});
     increaseTime(1);
     await dex.createLimitOrder(BAT, 1200, 11, SIDE.BUY, {from: trader1});
@@ -104,13 +104,13 @@ module.exports =async function (deployer, _network, accounts) {
     await dex.createLimitOrder(REP, 1000, 2, SIDE.BUY, {from: trader1});
     await dex.createMarketOrder(REP, 1000, SIDE.SELL, {from:trader2});
     increaseTime(1);
-    await dex.createLimitOrder(REP, 500, 2, SIDE.BUY, {from: trader1});
+    await dex.createLimitOrder(REP, 500, 4, SIDE.BUY, {from: trader1});
     await dex.createMarketOrder(REP, 500, SIDE.SELL, {from:trader2});
     increaseTime(1);
     await dex.createLimitOrder(REP, 800, 2, SIDE.BUY, {from: trader1});
     await dex.createMarketOrder(REP, 800, SIDE.SELL, {from:trader2});
     increaseTime(1);
-    await dex.createLimitOrder(REP, 1200, 2, SIDE.BUY, {from: trader1});
+    await dex.createLimitOrder(REP, 1200, 6, SIDE.BUY, {from: trader1});
     await dex.createMarketOrder(REP, 1200, SIDE.SELL, {from:trader2});
     increaseTime(1);
 
@@ -129,8 +129,8 @@ module.exports =async function (deployer, _network, accounts) {
         dex.createLimitOrder(ZRX, 500, 14, SIDE.BUY, {from:trader2}),
 
         dex.createLimitOrder(BAT, 2000, 16, SIDE.SELL, {from:trader3}),
-        dex.createLimitOrder(BAT, 3000, 16, SIDE.SELL, {from:trader4}),
-        dex.createLimitOrder(BAT, 500, 16, SIDE.SELL, {from:trader4}),
+        dex.createLimitOrder(BAT, 3000, 15, SIDE.SELL, {from:trader4}),
+        dex.createLimitOrder(BAT, 500, 14, SIDE.SELL, {from:trader4}),
 
         dex.createLimitOrder(REP, 4000, 10, SIDE.SELL, {from:trader3}),
         dex.createLimitOrder(REP, 2000, 9, SIDE.SELL, {from:trader3}),

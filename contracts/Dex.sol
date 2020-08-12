@@ -35,7 +35,7 @@ contract Dex {
     mapping(bytes32 => mapping(uint => Order[])) public orderBook;
     
     mapping(bytes32 => Token) public tokens;
-    mapping(address => mapping(bytes32=>uint)) public traderBalances;
+    mapping(address => mapping(bytes32 => uint)) public traderBalances;
     bytes32[] public tokenList;
     
     address public admin;
@@ -45,7 +45,7 @@ contract Dex {
     
     uint public nextTradeId;
     //for market trades
-    event newTrade(
+    event NewTrade(
         uint tradeId,
         uint orderId,
         bytes32 indexed ticker,
@@ -73,14 +73,14 @@ contract Dex {
         external
         view
         returns(Token[] memory){
-            Token[] memory _token = new Token[](tokenList.length);
+            Token[] memory _tokens = new Token[](tokenList.length);
             for(uint i=0;i < tokenList.length ;i++){
-                _token[i] = Token(
+                _tokens[i] = Token(
                     tokens[tokenList[i]].ticker,
                     tokens[tokenList[i]].tokenAddress
                 );
             }
-            return _token;
+            return _tokens;
         }
 
     function addToken(
@@ -202,7 +202,7 @@ contract Dex {
             uint matched = (remaining > available_liquidity) ? available_liquidity : remaining ;
             remaining = remaining.sub(matched);
             orders[i].filled = orders[i].filled.add(matched);
-            emit newTrade(
+            emit NewTrade(
                 nextTradeId,
                 orders[i].id,
                 ticker,
