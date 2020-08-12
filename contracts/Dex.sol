@@ -73,14 +73,14 @@ contract Dex {
         external
         view
         returns(Token[] memory){
-            Token[] memory _token = new Token[](tokenList.length);
+            Token[] memory _tokens = new Token[](tokenList.length);
             for(uint i=0;i < tokenList.length ;i++){
-                _token[i] = Token(
+                _tokens[i] = Token(
                     tokens[tokenList[i]].ticker,
                     tokens[tokenList[i]].tokenAddress
                 );
             }
-            return _token;
+            return _tokens;
         }
 
     function addToken(
