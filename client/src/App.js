@@ -2,11 +2,14 @@ import React,{useState,useEffect} from 'react';
 import Header from './Header.js';
 import WalletComponent from './WalletComponent.js';
 import NewOrder from './NewOrder.js';
-
+import AllOrder from './AllOrder.js';
+import MyOrders from './MyOrders.js';
 const SIDE = {
   BUY:0,
   SELL:1
 };
+
+
 
 function App({web3, accounts, contracts}) {
   const [tokens,setTokens] = useState([]);
@@ -18,7 +21,10 @@ function App({web3, accounts, contracts}) {
     },
     selectedToken:undefined
   });
-
+  const [orders, setOrders] = useState({
+    buy:[],
+    sell:[]
+  });
   const selectToken = token => {
     setUser({...user, selectedToken:token});
   }
@@ -30,6 +36,17 @@ function App({web3, accounts, contracts}) {
     const tokenWallet = await contracts[token.ticker].methods
       .balanceOf(account).call();
     return {tokenDex, tokenWallet};
+  }
+
+  const getOrders = async (token) => {
+    const buyorders = await contracts.dex.methods 
+      .getOrders(web3.utils.fromAscii(token.ticker),SIDE.BUY)
+      .call();
+    const sellorders = await contracts.dex.methods
+      .getOrders(web3.utils.fromAscii(token.ticker),SIDE.SELL)
+      .call();
+    
+    return {buy:buyorders,sell:sellorders};
   }
 
   const deposit =async (amount) => {
@@ -72,18 +89,22 @@ function App({web3, accounts, contracts}) {
         side
       )
       .send({from:user.accounts[0]});
+      const orders = await getOrders(user.selectedToken);
+      setOrders(orders);
   };
 
   const createLimitOrder =async (amount, price, side) => {
-    await contracts.dex.methods.methods
-      createLimitOrder(
+    await contracts.dex.methods
+      .createLimitOrder(
         web3.utils.fromAscii(user.selectedToken.ticker),
         amount,
         price,
         side
       )
       .send({from:user.accounts[0]});
-  };
+      const orders = await getOrders(user.selectedToken);
+      setOrders(orders);
+    };
 
   useEffect(() => {
     const init = async () => {
@@ -93,12 +114,27 @@ function App({web3, accounts, contracts}) {
         ticker:web3.utils.hexToUtf8(token.ticker)
       }));
       const balances = await getBalances(accounts[0], tokens[0]);
+      const orders = await getOrders(tokens[0]);
       setTokens(tokens);
       setUser({accounts, balances, selectedToken:tokens[0]});
+      setOrders(orders);
+
     }
     init();
     
   }, []);
+
+  useEffect(() => {
+    const init = async () => {
+      const balances = await getBalances(accounts[0], user.selectedToken);
+      const orders = await getOrders(user.selectedToken);
+      setUser({...user,balances});
+      setOrders(orders);
+    }
+    if(typeof user.selectedToken !== 'undefined'){
+      init();
+    }
+  },[user.selectedToken]);
 
   if(typeof user.selectedToken === 'undefined'){
     return(<div>LOADING...</div>)
@@ -126,6 +162,26 @@ function App({web3, accounts, contracts}) {
               />
             ):null}
           </div>
+          {
+            user.selectedToken !=='DAI' ? (
+              <div className="col-sm-8">
+                <AllOrder 
+                  orders={orders}
+                />
+                <MyOrders 
+                  orders = {{
+                    // sending only buy / sell orders of current user through filtering
+                    buy: orders.buy.filter(
+                      order => order.trader.toLowerCase() === user.accounts[0].toLowerCase()
+                    ),
+                    sell: orders.sell.filter(
+                      order => order.trader.toLowerCase() === user.accounts[0].toLowerCase()
+                    )
+                  }}
+                />
+              </div>
+            ) : null
+          }
         </div>
       </main>
     </div>
