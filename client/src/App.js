@@ -4,12 +4,12 @@ import WalletComponent from './WalletComponent.js';
 import NewOrder from './NewOrder.js';
 import AllOrder from './AllOrder.js';
 import MyOrders from './MyOrders.js';
+import AllTrades from './AllTrades.js';
+
 const SIDE = {
   BUY:0,
   SELL:1
 };
-
-
 
 function App({web3, accounts, contracts}) {
   const [tokens,setTokens] = useState([]);
@@ -25,6 +25,9 @@ function App({web3, accounts, contracts}) {
     buy:[],
     sell:[]
   });
+  const [trades,setTrades] = useState([]);
+  // listener represents websocket connection with blockchain 
+  const [listener, setListener] =useState(undefined);
   const selectToken = token => {
     setUser({...user, selectedToken:token});
   }
@@ -47,6 +50,31 @@ function App({web3, accounts, contracts}) {
       .call();
     
     return {buy:buyorders,sell:sellorders};
+  }
+  // newTrade event listening
+  const listenToTrades = (token) => {
+    // there can be duplicate trades  in newTrade prop
+    // so tradeIds set to make sure that no duplicate trades are being listened
+    const tradeIds = new Set();
+    //when a user changes token from dropdown ,we need to reset the trades
+    //so that trades of different tokens does not end up together
+    setTrades([]);
+    //when a user makes a new trade listenToTrades will be executed and 
+    // multiple socket connection will be made to listen to trades which will hinder the performance
+    // these socket connections will be killed using the setListener
+    const listener = contracts.dex.events.newTrade(
+      {
+        filter: {ticker:web3.utils.fromAscii(token.ticker)},
+        fromBlock:0
+      }
+    )
+    .on('data', newTrade => {
+      //check for newTrade in tradeIds ,if not found newTrade is added in tradesIds set
+      if(tradeIds.has(newTrade.returnValues.tradeId)) return ;
+      tradeIds.add(newTrade.returnValues.tradeId)
+      setTrades(trades => ([...trades,newTrade.returnValues]))
+    });
+    setListener(listener);
   }
 
   const deposit =async (amount) => {
@@ -105,7 +133,7 @@ function App({web3, accounts, contracts}) {
       const orders = await getOrders(user.selectedToken);
       setOrders(orders);
     };
-
+    //when component is first mounted into DOM, runs only once
   useEffect(() => {
     const init = async () => {
       const rawTokens = await contracts.dex.methods.getTokens().call();
@@ -115,6 +143,7 @@ function App({web3, accounts, contracts}) {
       }));
       const balances = await getBalances(accounts[0], tokens[0]);
       const orders = await getOrders(tokens[0]);
+      listenToTrades(tokens[0]);
       setTokens(tokens);
       setUser({accounts, balances, selectedToken:tokens[0]});
       setOrders(orders);
@@ -123,18 +152,24 @@ function App({web3, accounts, contracts}) {
     init();
     
   }, []);
-
+  //executed everytime user changes token
   useEffect(() => {
     const init = async () => {
       const balances = await getBalances(accounts[0], user.selectedToken);
       const orders = await getOrders(user.selectedToken);
+      listenToTrades(user.selectedToken);
       setUser({...user,balances});
       setOrders(orders);
     }
     if(typeof user.selectedToken !== 'undefined'){
       init();
     }
-  },[user.selectedToken]);
+  },[user.selectedToken],
+  //callback to remove previous listener
+    () => {
+      listener.unsubscribe();
+    }
+  );
 
   if(typeof user.selectedToken === 'undefined'){
     return(<div>LOADING...</div>)
@@ -165,6 +200,9 @@ function App({web3, accounts, contracts}) {
           {
             user.selectedToken !=='DAI' ? (
               <div className="col-sm-8">
+                <AllTrades 
+                  trades ={trades}
+                />
                 <AllOrder 
                   orders={orders}
                 />
