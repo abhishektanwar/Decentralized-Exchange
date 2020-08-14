@@ -27,4 +27,4 @@ migrate --reset
 npm start
 ```
 
-[image](https://user-images.githubusercontent.com/40486188/90203130-7d7c8b80-ddfd-11ea-93c7-2425440b6493.png)
+![WhatsApp Image 2020-08-14 at 7 21 20 AM](https://user-images.githubusercontent.com/40486188/90203611-cc76f080-ddfe-11ea-94b8-4f166cec864a.jpeg)
